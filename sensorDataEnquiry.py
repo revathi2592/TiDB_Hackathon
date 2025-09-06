@@ -37,7 +37,7 @@ def slack_events():
 
 
 def send_message_to_slack(channel, text):
-    url = "url = "https://slack.com/api/chat.postMessage"
+    url ="https://slack.com/api/chat.postMessage"
     #url = "https://api.slack.com/apps/sensordataenquiry/chat.postMessage"
     headers = {"Authorization": f"Bearer {SLACK_BOT_TOKEN}"}
     payload = {"channel": channel, "text": text}
@@ -46,6 +46,7 @@ def send_message_to_slack(channel, text):
 
 if __name__ == "__main__":
     app.run(port=3000, debug=True)
+
 
 
 
