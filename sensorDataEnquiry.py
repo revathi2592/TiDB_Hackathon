@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify
 import os
 import requests
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -10,9 +13,8 @@ SLACK_BOT_TOKEN ="xoxb-9437322388582-9455478622388-nXSTFwl0Dq3kBAehjwNLJkjw"
 @app.route('/slack/events', methods=['POST'])
 def slack_events():
     data = request.get_json()
-    print("======================================")
-    print(data)
-    print("======================================")
+    logger.info("Received Slack event")
+    logger.debug(f"Payload: {data}")
     # 1. Handle Slack's URL verification challenge
     if data.get("type") == "url_verification":
         return jsonify({"challenge": data["challenge"]})
@@ -46,6 +48,7 @@ def send_message_to_slack(channel, text):
 
 if __name__ == "__main__":
     app.run(port=3000, debug=True)
+
 
 
 
