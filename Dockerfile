@@ -12,5 +12,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Run app with gunicorn (production-ready)
-CMD ["gunicorn", "-b", ":8080", "app:testSlackBot"]
+CMD ["gunicorn", "-b", ":8080", "testSlackBot:app"]
+
 
