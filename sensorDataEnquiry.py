@@ -5,7 +5,7 @@ import requests
 app = Flask(__name__)
 
 #SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")  # store securely in env var
-SLACK_BOT_TOKEN ="xoxb-9437322388582-9455478622388-QTsG2cjfSnHpDI93X5POJGmN"
+SLACK_BOT_TOKEN ="xoxb-9437322388582-9455478622388-nXSTFwl0Dq3kBAehjwNLJkjw"
 
 @app.route('/slack/events', methods=['POST'])
 def slack_events():
@@ -46,6 +46,7 @@ def send_message_to_slack(channel, text):
 
 if __name__ == "__main__":
     app.run(port=3000, debug=True)
+
 
 
 
