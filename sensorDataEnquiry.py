@@ -10,7 +10,9 @@ SLACK_BOT_TOKEN ="xoxb-9437322388582-9455478622388-QTsG2cjfSnHpDI93X5POJGmN"
 @app.route('/slack/events', methods=['POST'])
 def slack_events():
     data = request.get_json()
-
+    print("======================================")
+    print(data)
+    print("======================================")
     # 1. Handle Slack's URL verification challenge
     if data.get("type") == "url_verification":
         return jsonify({"challenge": data["challenge"]})
@@ -43,3 +45,4 @@ def send_message_to_slack(channel, text):
 
 if __name__ == "__main__":
     app.run(port=3000, debug=True)
+
