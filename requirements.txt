@@ -3,4 +3,6 @@ requests
 gunicorn
 slack_sdk
 python-dotenv
+slackeventsapi
+
 
