@@ -51,7 +51,8 @@ def message(payload):
     if BOT_ID != user_id:
         sql_query = nl_to_sql(text)
         client.chat_postMessage(
-                channel=channel_id,  text=f"SQL:\n```{sql_query}```")
+                channel=channel_id,  text=sql_query )
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
