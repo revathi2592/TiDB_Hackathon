@@ -6,8 +6,7 @@ from flask import Flask, request, Response
 from slackeventsapi import SlackEventAdapter
 
 app = Flask(__name__)
-slack_event_adapter = SlackEventAdapter(
-    "74c46a189125278236c8b5a090d8ab02", '/slack/events', app)
+slack_event_adapter = SlackEventAdapter("74c46a189125278236c8b5a090d8ab02", '/slack/events', app)
 
 client = slack.WebClient(token="xoxb-9437322388582-9455478622388-RU87KWoTmc2QjMnb3kvXFqgv")
 BOT_ID = client.api_call("auth.test")['user_id']
@@ -23,3 +22,4 @@ def message(payload):
 if __name__ == "__main__":
 
     app.run(debug=True, port=8080)
+
