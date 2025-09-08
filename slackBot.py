@@ -4,11 +4,16 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, request, Response
 from slackeventsapi import SlackEventAdapter
-import google.generativeai as genai
 import pymysql
-# --- Gemini Client ---
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-gemini_model = genai.GenerativeModel("gemini-2.0-flash")
+from vertexai.generative_models import GenerativeModel
+import vertexai
+
+# --- Initialize Vertex AI ---
+vertexai.init(project=os.environ['PROJECT_ID'], location="us-central1")
+
+# Load Gemini model from Vertex AI
+gemini_model = GenerativeModel("gemini-2.0-flash")
+
 
 
 app = Flask(__name__)
@@ -54,6 +59,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
