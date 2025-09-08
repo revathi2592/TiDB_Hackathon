@@ -47,6 +47,44 @@ def nl_to_sql(question: str) -> str:
     sql_query = response.text.strip().strip("```sql").strip("```")
     return sql_query
 
+# --- TiDB Connection using pymysql ---
+
+
+def get_tidb_connection():
+    return pymysql.connect(
+        host=os.environ["TIDB_HOST"],
+        port=os.environ["TIDB_PORT"],
+        user=os.environ["TIDB_USER"],
+        password=os.environ["TIDB_PASSWORD"],
+        database=os.environ["TIDB_DATABASE"],
+        ssl={
+            "ca": os.environ.get("TIDB_SSL_CA")
+        } if os.environ.get("TIDB_SSL_CA") else None
+    )
+
+def run_query(sql: str):
+    """Run query against TiDB and return results"""
+    try:
+        conn = get_tidb_connection()
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        col_names = [desc[0] for desc in cursor.description]
+        cursor.close()
+        conn.close()
+
+        if not rows:
+            return "No results found."
+
+        result_text = " | ".join(col_names) + "\n"
+        result_text += "\n".join([" | ".join(str(x) for x in row) for row in rows[:10]])
+        if len(rows) > 10:
+            result_text += f"\n...and {len(rows)-10} more rows."
+        return result_text
+
+    except Exception as e:
+        return f"Error executing query: {e}"
+
 # Keep a simple cache of processed event_ids
 processed_events = set()
 
@@ -70,14 +108,13 @@ def message(payload):
 
     if text:
         sql_query = nl_to_sql(text)
-        client.chat_postMessage(
-            channel=channel_id,
-            text=f"SQL:\n```{sql_query}```"
-        )
+        results = run_query(sql_query)
+        client.chat_postMessage(channel=channel_id, text=f"SQL:\n```{sql_query}```\n\nResults:\n```{results}```")
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
