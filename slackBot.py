@@ -47,19 +47,38 @@ def nl_to_sql(question: str) -> str:
     sql_query = response.text.strip().strip("```sql").strip("```")
     return sql_query
 
-@ slack_event_adapter.on('message')
+# Keep a simple cache of processed event_ids
+processed_events = set()
+
+@slack_event_adapter.on('message')
 def message(payload):
     event = payload.get('event', {})
+    event_id = payload.get('event_id')
     channel_id = event.get('channel')
     user_id = event.get('user')
     text = event.get('text')
-    if BOT_ID != user_id:
+    subtype = event.get('subtype')
+
+    # 1. Ignore if already processed (deduplication)
+    if event_id in processed_events:
+        return
+    processed_events.add(event_id)
+
+    # 2. Ignore bot messages
+    if subtype == "bot_message" or user_id == BOT_ID:
+        return
+
+    if text:
         sql_query = nl_to_sql(text)
         client.chat_postMessage(
-                channel=channel_id,  text=sql_query )
+            channel=channel_id,
+            text=f"SQL:\n```{sql_query}```"
+        )
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
