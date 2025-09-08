@@ -8,6 +8,7 @@ import pymysql
 from vertexai.generative_models import GenerativeModel
 import vertexai
 
+
 # --- Initialize Vertex AI ---
 vertexai.init(project=os.environ['PROJECT_ID'], location="us-central1")
 
@@ -59,6 +60,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
