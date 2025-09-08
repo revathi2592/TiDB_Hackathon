@@ -27,8 +27,8 @@ BOT_ID = client.api_call("auth.test")['user_id']
 def nl_to_sql(question: str) -> str:
     """Convert natural language to SQL using Gemini"""
     schema = """
-    Database: sensor_db
-    Table: sensor_data
+    Database: test
+    Table: sensor_data1
     Columns:
       - device_id (string)
       - status (string: e.g. SUCCESS, FAILED)
@@ -114,6 +114,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
