@@ -4,8 +4,9 @@ gunicorn
 slack_sdk
 python-dotenv
 slackeventsapi
-google-generativeai
+vertexai
 pymysql
+
 
 
 
