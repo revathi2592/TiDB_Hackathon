@@ -1,5 +1,5 @@
 import slack_sdk    as slack
-import os
+import os, tempfile
 from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, request, Response
@@ -7,6 +7,7 @@ from slackeventsapi import SlackEventAdapter
 import pymysql
 from vertexai.generative_models import GenerativeModel
 import vertexai
+from google.cloud import secretmanager
 
 
 # --- Initialize Vertex AI ---
@@ -51,15 +52,24 @@ def nl_to_sql(question: str) -> str:
 
 
 def get_tidb_connection():
+    client = secretmanager.SecretManagerServiceClient()
+    name = f"projects/{os.environ['SECRET_PROJ_ID']}/secrets/tidb-ssl-ca/versions/latest"
+    response = client.access_secret_version(name=name)
+
+    # Write PEM to a temp file
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    tmp.write(response.payload.data)
+    print(tmp.name)
+    tmp.flush()
     return pymysql.connect(
         host=os.environ["TIDB_HOST"],
         port=os.environ["TIDB_PORT"],
         user=os.environ["TIDB_USER"],
         password=os.environ["TIDB_PASSWORD"],
         database=os.environ["TIDB_DATABASE"],
-        ssl={
-            "ca": os.environ.get("TIDB_SSL_CA")
-        } if os.environ.get("TIDB_SSL_CA") else None
+        ssl_verify_cert=True,
+        ssl_verify_identity=True,
+        ssl_ca=tmp.name
     )
 
 def run_query(sql: str):
@@ -119,6 +129,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
