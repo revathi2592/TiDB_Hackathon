@@ -66,6 +66,9 @@ def run_query(sql: str):
     """Run query against TiDB and return results"""
     try:
         conn = get_tidb_connection()
+        print("========================")
+        print(conn)
+        print("==========================")
         cursor = conn.cursor()
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -114,6 +117,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
