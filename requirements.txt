@@ -6,6 +6,8 @@ python-dotenv
 slackeventsapi
 vertexai
 pymysql
+google-cloud-secret-manager
+
 
 
 
