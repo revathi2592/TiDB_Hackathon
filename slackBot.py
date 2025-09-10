@@ -101,6 +101,37 @@ def run_query(sql: str):
     except Exception as e:
         return f"Error executing query: {e}"
 
+
+def plot_results(rows, col_names, filename="plot.png"):
+    """Create a simple line plot from query results"""
+    import pandas as pd
+
+    df = pd.DataFrame(rows, columns=col_names)
+
+    # Ensure numeric columns are available
+    if not {"reading_time", "temperature", "vibration"}.issubset(df.columns):
+        return None  # Don't plot if required columns are missing
+
+    # Plot temperature & vibration over time
+    plt.figure(figsize=(8, 4))
+    plt.plot(df["reading_time"], df["temperature"], label="Temperature", marker="o")
+    plt.plot(df["reading_time"], df["vibration"], label="Vibration", marker="x")
+    plt.xlabel("Reading Time")
+    plt.ylabel("Value")
+    plt.title("Sensor Readings Over Time")
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    # Save to bytes buffer (so no local file needed)
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png")
+    buf.seek(0)
+    plt.close()
+    return buf
+
+            
+
 # Keep a simple cache of processed event_ids
 processed_events = set()
 
@@ -113,23 +144,48 @@ def message(payload):
     text = event.get('text')
     subtype = event.get('subtype')
 
-    # 1. Ignore if already processed (deduplication)
+    # Deduplication
     if event_id in processed_events:
         return
     processed_events.add(event_id)
 
-    # 2. Ignore bot messages
+    # Ignore bot messages
     if subtype == "bot_message" or user_id == BOT_ID:
         return
 
     if text:
         sql_query = nl_to_sql(text)
-        results = run_query(sql_query)
-        client.chat_postMessage(channel=channel_id, text=f"SQL:\n```{sql_query}```\n\nResults:\n```{results}```")
+        rows, col_names = run_query(sql_query)
+
+        if rows is None:
+            client.chat_postMessage(channel=channel_id, text=f"SQL:\n```{sql_query}```\n\nError: {col_names[0]}")
+            return
+
+        # --- If user asks for a graph ---
+        if "plot" in text.lower() or "graph" in text.lower() or "chart" in text.lower():
+            buf = plot_results(rows, col_names)
+            if buf:
+                client.files_upload(
+                    channels=channel_id,
+                    file=buf,
+                    filename="plot.png",
+                    title="Sensor Data Plot"
+                )
+            else:
+                client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
+        else:
+            # Text-based result preview
+            result_text = " | ".join(col_names) + "\n"
+            result_text += "\n".join([" | ".join(str(x) for x in row) for row in rows[:10]])
+            if len(rows) > 10:
+                result_text += f"\n...and {len(rows)-10} more rows."
+
+            client.chat_postMessage(channel=channel_id, text=f"SQL:\n```{sql_query}```\n\nResults:\n```{result_text}```")
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
