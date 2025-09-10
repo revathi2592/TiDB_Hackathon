@@ -32,7 +32,7 @@ def nl_to_sql(question: str) -> str:
     Table: sensor_data1
     Columns:
       - device_id (string)
-      - status (string: e.g. SUCCESS, FAILED)
+      - status (string: e.g. SUCCESS, FAIL)
       - reading_time (datetime)
       - temperature (float)
       - vibration (float)
@@ -130,6 +130,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
