@@ -42,6 +42,7 @@ def nl_to_sql(question: str) -> str:
     {schema}
     Question: {question}
     Only output the SQL query, nothing else.
+    select only device_id, status, reading_time, temperature and vibration
     """
 
     response = gemini_model.generate_content(prompt)
@@ -129,6 +130,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
