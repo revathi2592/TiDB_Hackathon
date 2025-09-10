@@ -63,7 +63,7 @@ def get_tidb_connection():
     tmp.flush()
     return pymysql.connect(
         host=os.environ["TIDB_HOST"],
-        port=os.environ["TIDB_PORT"],
+        port=int(os.environ["TIDB_PORT"]),
         user=os.environ["TIDB_USER"],
         password=os.environ["TIDB_PASSWORD"],
         database=os.environ["TIDB_DATABASE"],
@@ -129,6 +129,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
