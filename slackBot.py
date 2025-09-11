@@ -8,6 +8,7 @@ import pymysql
 from vertexai.generative_models import GenerativeModel
 import vertexai
 from google.cloud import secretmanager
+import matplotlib.pyplot as plt
 
 
 # --- Initialize Vertex AI ---
@@ -188,6 +189,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
