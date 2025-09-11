@@ -99,6 +99,9 @@ def run_query(sql: str):
         return rows, col_names 
 
     except Exception as e:
+        print("============error==================")
+        print(e)
+        print("===============================")
         return f"Error executing query: {e}"
 
 
@@ -185,7 +188,6 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
-
 
 
 
