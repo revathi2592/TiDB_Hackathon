@@ -90,7 +90,7 @@ def run_query(sql: str):
         conn.close()
 
         if not rows:
-            return "No results found."
+            return [], col_names
 
         result_text = " | ".join(col_names) + "\n"
         result_text += "\n".join([" | ".join(str(x) for x in row) for row in rows[:10]])
@@ -102,7 +102,7 @@ def run_query(sql: str):
         print("============error==================")
         print(e)
         print("===============================")
-        return f"Error executing query: {e}"
+        return None, [f"Error executing query: {e}"]
 
 
 def plot_results(rows, col_names, filename="plot.png"):
@@ -188,6 +188,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
