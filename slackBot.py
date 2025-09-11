@@ -96,7 +96,7 @@ def run_query(sql: str):
         result_text += "\n".join([" | ".join(str(x) for x in row) for row in rows[:10]])
         if len(rows) > 10:
             result_text += f"\n...and {len(rows)-10} more rows."
-        return result_text
+        return rows, col_names 
 
     except Exception as e:
         return f"Error executing query: {e}"
@@ -185,6 +185,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
