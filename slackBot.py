@@ -158,6 +158,29 @@ def format_results_table(rows, col_names, max_rows=10):
     table = df_display.to_markdown(index=False)  # requires tabulate (pandas uses it)
     return f"```{table}```{footer}"
 
+
+def format_results_blocks(rows, col_names, max_rows=5):
+    """Format query results as Slack Block Kit blocks"""
+    blocks = [
+        {"type": "header", "text": {"type": "plain_text", "text": "📊 Sensor Data Results"}}
+    ]
+
+    # Limit rows
+    display_rows = rows[:max_rows]
+    if not display_rows:
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": "No data found."}})
+        return blocks
+
+    for row in display_rows:
+        row_text = "\n".join([f"*{col}*: {val}" for col, val in zip(col_names, row)])
+        blocks.append({"type": "section", "fields": [{"type": "mrkdwn", "text": row_text}]})
+        blocks.append({"type": "divider"})
+
+    if len(rows) > max_rows:
+        blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": f"...and {len(rows)-max_rows} more rows"}]})
+
+    return blocks
+
             
 
 # Keep a simple cache of processed event_ids
@@ -210,17 +233,18 @@ def message(payload):
                 client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
         else:
             # Text-based result preview
-            result_text = format_results_table(rows, col_names)
-            result_text = " | ".join(col_names) + "\n"
-            result_text += "\n".join([" | ".join(str(x) for x in row) for row in rows[:10]])
+            #result_text = format_results_table(rows, col_names)
+            #result_text = " | ".join(col_names) + "\n"
+            #result_text += "\n".join([" | ".join(str(x) for x in row) for row in rows[:10]])
             client.chat_postMessage(
                     channel=channel_id,
-                    text=f"SQL:\n```{sql_query}```\n\nResults:\n{result_text}"
+                    blocks=format_results_blocks(rows, col_names)
                 )
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
