@@ -170,11 +170,16 @@ def message(payload):
         if "plot" in text.lower() or "graph" in text.lower() or "chart" in text.lower():
             buf = plot_results(rows, col_names)
             if buf:
-                client.files_upload(
-                channels=channel_id,
-                file=buf,
-                filename="plot.png",
-                title="Sensor Data Plot"
+                client.files_upload_v2(
+                    channel=channel_id,
+                    initial_comment="Here is your sensor data plot ",
+                    file_uploads=[
+                        {
+                            "file": buf,
+                            "filename": "plot.png",
+                            "title": "Sensor Data Plot"
+                        }
+                    ]
                 )
 
             else:
@@ -191,7 +196,6 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
-
 
 
 
