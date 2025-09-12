@@ -9,6 +9,8 @@ pymysql
 google-cloud-secret-manager
 matplotlib
 pandas
+tabulate
+
 
 
 
