@@ -140,6 +140,23 @@ def plot_results(rows, col_names, filename="plot.png"):
     plt.close()
     return buf
 
+def format_results_table(rows, col_names, max_rows=10):
+    """Format query results into a table with markdown for Slack"""
+    import pandas as pd
+
+    df = pd.DataFrame(rows, columns=col_names)
+
+    # Limit rows
+    if len(df) > max_rows:
+        df_display = df.head(max_rows)
+        footer = f"\n...and {len(df) - max_rows} more rows."
+    else:
+        df_display = df
+        footer = ""
+
+    # Build table string
+    table = df_display.to_markdown(index=False)  # requires tabulate (pandas uses it)
+    return f"```{table}```{footer}"
 
             
 
@@ -189,19 +206,22 @@ def message(payload):
                 )
 
             else:
+                
                 client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
         else:
             # Text-based result preview
+            result_text = format_results_table(rows, col_names)
             result_text = " | ".join(col_names) + "\n"
             result_text += "\n".join([" | ".join(str(x) for x in row) for row in rows[:10]])
-            if len(rows) > 10:
-                result_text += f"\n...and {len(rows)-10} more rows."
-
-            client.chat_postMessage(channel=channel_id, text=f"SQL:\n```{sql_query}```\n\nResults:\n```{result_text}```")
+            client.chat_postMessage(
+                    channel=channel_id,
+                    text=f"SQL:\n```{sql_query}```\n\nResults:\n{result_text}"
+                )
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
