@@ -108,32 +108,38 @@ def run_query(sql: str):
 
 
 def plot_results(rows, col_names, filename="plot.png"):
-    """Create a simple line plot from query results"""
+    """Create a line plot for one or more devices"""
     import pandas as pd
 
     df = pd.DataFrame(rows, columns=col_names)
 
-    # Ensure numeric columns are available
-    if not {"reading_time", "temperature", "vibration"}.issubset(df.columns):
-        return None  # Don't plot if required columns are missing
+    # Ensure required columns
+    if not {"reading_time", "temperature", "vibration", "device_id"}.issubset(df.columns):
+        return None  
 
-    # Plot temperature & vibration over time
-    plt.figure(figsize=(8, 4))
-    plt.plot(df["reading_time"], df["temperature"], label="Temperature", marker="o")
-    plt.plot(df["reading_time"], df["vibration"], label="Vibration", marker="x")
+    # Convert to datetime if not already
+    df["reading_time"] = pd.to_datetime(df["reading_time"])
+
+    plt.figure(figsize=(10, 5))
+
+    # Plot temperature and vibration separately by device
+    for device_id, group in df.groupby("device_id"):
+        plt.plot(group["reading_time"], group["temperature"], marker="o", label=f"{device_id} - Temp")
+        plt.plot(group["reading_time"], group["vibration"], marker="x", label=f"{device_id} - Vib")
+
     plt.xlabel("Reading Time")
     plt.ylabel("Value")
-    plt.title("Sensor Readings Over Time")
+    plt.title("Device Comparison - Temperature & Vibration")
     plt.legend()
     plt.xticks(rotation=45)
     plt.tight_layout()
 
-    # Save to bytes buffer (so no local file needed)
     buf = io.BytesIO()
     plt.savefig(buf, format="png")
     buf.seek(0)
     plt.close()
     return buf
+
 
             
 
