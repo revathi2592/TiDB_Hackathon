@@ -1,4 +1,4 @@
-import slack_sdk    as slack
+\import slack_sdk    as slack
 import os, tempfile
 from pathlib import Path
 from dotenv import load_dotenv
@@ -171,11 +171,12 @@ def message(payload):
             buf = plot_results(rows, col_names)
             if buf:
                 client.files_upload(
-                    channels=channel_id,
-                    file=buf,
-                    filename="plot.png",
-                    title="Sensor Data Plot"
+                channels=channel_id,
+                file=buf,
+                filename="plot.png",
+                title="Sensor Data Plot"
                 )
+
             else:
                 client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
         else:
@@ -190,6 +191,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
