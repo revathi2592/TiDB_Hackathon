@@ -332,18 +332,19 @@ def message(payload):
         
         # If graph requested
         if "plot" in text.lower() or "graph" in text.lower() or "chart" in text.lower():
-            if result["rows"]:  # double-check rows are not empty
-                buf = plot_results(result["rows"], result["cols"])
-                if buf:
-                    client.files_upload_v2(
-                        channel=channel_id,
-                        initial_comment=f"Here is your {result['mode']} query result plot",
-                        file_uploads=[{
+            buf = plot_results(rows, col_names)
+            if buf:
+                client.files_upload_v2(
+                    channel=channel_id,
+                    initial_comment="Here is your sensor data plot ",
+                    file_uploads=[
+                        {
                             "file": buf,
                             "filename": "plot.png",
                             "title": "Sensor Data Plot"
-                        }]
-                    )
+                        }
+                    ]
+                )
                 else:
                     client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
             else:
@@ -359,6 +360,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
