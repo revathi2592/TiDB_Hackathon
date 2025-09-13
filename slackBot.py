@@ -71,23 +71,40 @@ def run_query(sql: str):
         return None, [f"Error executing query: {e}"]
 
 # --- Plotting ---
-def plot_results(rows, col_names):
-    df = pd.DataFrame(rows, columns=col_names)
-    if not {"reading_time", "device_id"}.issubset(df.columns):
-        return None
-    df["reading_time"] = pd.to_datetime(df["reading_time"])
-    plt.figure(figsize=(10,5))
-    metrics = [m for m in ["temperature", "vibration"] if m in df.columns]
-    if not metrics: return None
+def plot_results(rows, col_names, filename="plot.png"):
+    """Create a line plot for one or more devices with proper numeric conversion"""
+    import pandas as pd
 
+    df = pd.DataFrame(rows, columns=col_names)
+
+    # Ensure required columns
+    required_cols = {"reading_time", "temperature", "vibration", "device_id"}
+    if not required_cols.issubset(df.columns):
+        return None  
+
+    # Convert reading_time to datetime
+    df["reading_time"] = pd.to_datetime(df["reading_time"])
+
+    # Convert numeric columns explicitly (important!)
+    for col in ["temperature", "vibration", "pressure"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    # Drop rows where all numeric metrics are NaN
+    df = df.dropna(subset=["temperature", "vibration"], how="all")
+
+    plt.figure(figsize=(10, 5))
+
+    # Plot temperature and vibration per device
     for device_id, group in df.groupby("device_id"):
-        for metric in metrics:
-            marker = "o" if metric=="temperature" else "x"
-            plt.plot(group["reading_time"], group[metric], marker=marker, label=f"{device_id} - {metric}")
+        if "temperature" in group.columns:
+            plt.plot(group["reading_time"], group["temperature"], marker="o", label=f"{device_id} - Temp")
+        if "vibration" in group.columns:
+            plt.plot(group["reading_time"], group["vibration"], marker="x", label=f"{device_id} - Vib")
 
     plt.xlabel("Reading Time")
     plt.ylabel("Value")
-    plt.title("Device Comparison - " + " & ".join(metrics).title())
+    plt.title("Device Comparison - Temperature & Vibration")
     plt.legend()
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -97,6 +114,7 @@ def plot_results(rows, col_names):
     buf.seek(0)
     plt.close()
     return buf
+
 
 # --- Formatting Slack blocks ---
 def format_results_blocks(rows, col_names, max_rows=5):
@@ -226,3 +244,4 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
