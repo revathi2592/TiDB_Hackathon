@@ -26,34 +26,75 @@ slack_event_adapter = SlackEventAdapter(os.environ['SIGNING_SECRET_'], '/slack/e
 client = slack.WebClient(token=os.environ['SLACK_TOKEN_'])
 BOT_ID = client.api_call("auth.test")['user_id']
 
+
+# --- Step 1: Classify query type ---
+def classify_query(user_query):
+    prompt = f"""
+    You are a query classifier.
+    If the query requires structured SQL facts (filters, aggregates, counts) → return "SQL".
+    If the query is about semantic similarity or patterns → return "VECTOR".
+    Query: {user_query}
+    Answer:"""
+    response = gemini_model.generate_content(prompt)
+    return response.text.strip()
+
         
-def nl_to_sql(question: str) -> str:
-    """Convert natural language to SQL using Gemini"""
+# --- Step 2: Run SQL Query (NL → SQL → Execute) ---
+def run_sql_query(user_query):
     schema = """
     Database: test
     Table: sensor_data1
     Columns:
-      - device_id (string)
+      - device_id (string: e.g. device_1, device_2)
       - status (string: e.g. SUCCESS, FAIL)
       - reading_time (datetime)
       - temperature (float)
       - vibration (float)
     """
-    prompt = f"""
+    sql_prompt = f"""
     Convert the following natural language question into a valid MySQL-compatible SQL query for TiDB.
     {schema}
-    Question: {question}
+    Question: {user_query}
     Only output the SQL query, nothing else.
-    select only device_id, status, reading_time, temperature and vibration
     """
+    sql_response = gemini_model.generate_content(sql_prompt)
+    sql_query = sql_response.text.strip().strip("```sql").strip("```")
 
-    response = gemini_model.generate_content(prompt)
-    sql_query = response.text.strip().strip("```sql").strip("```")
-    return sql_query
+    rows, col_names = run_query(sql_query)
+    return rows, col_names, sql_query
+
+
+# --- Step 3: Vector Search ---
+def run_vector_search(user_query, top_k=5):
+    # Create embedding for query
+    model = TextEmbeddingModel.from_pretrained("text-embedding-005")
+    embeddings = model.get_embeddings([user_query])
+    query_vector = embeddings[0].values
+
+    # TiDB ANN search
+    vector_sql = f"""
+    SELECT device_id, reading_time, status,
+           1 - (dot_product(embedding, JSON_ARRAY_PACK('{query_vector}')) /
+           (norm(embedding) * norm(JSON_ARRAY_PACK('{query_vector}')))) AS similarity
+    FROM sensor_data1
+    ORDER BY similarity ASC
+    LIMIT {top_k};
+    """
+    rows, col_names = run_query(vector_sql)
+    return rows, col_names, vector_sql
+
+# --- Step 4: Main handler ---
+def handle_query(user_query):
+    mode = classify_query(user_query)
+    if mode == "SQL":
+        rows, col_names, sql = run_sql_query(user_query)
+        return {"mode": "SQL", "query": sql, "rows": rows, "cols": col_names}
+    else:
+        rows, col_names, sql = run_vector_search(user_query)
+        return {"mode": "VECTOR", "query": sql, "rows": rows, "cols": col_names}
+
 
 # --- TiDB Connection using pymysql ---
-
-
 def get_tidb_connection():
     client = secretmanager.SecretManagerServiceClient()
     name = f"projects/{os.environ['SECRET_PROJ_ID']}/secrets/tidb-ssl-ca/versions/latest"
@@ -205,8 +246,7 @@ def message(payload):
         return
 
     if text:
-        sql_query = nl_to_sql(text)
-        rows, col_names = run_query(sql_query)
+        result = handle_query(text)
 
         if rows is None:
             client.chat_postMessage(channel=channel_id, text=f"SQL:\n```{sql_query}```\n\nError: {col_names[0]}")
@@ -244,6 +284,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
