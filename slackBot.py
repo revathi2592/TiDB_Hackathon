@@ -201,7 +201,7 @@ def format_results_table(rows, col_names, max_rows=10):
 
 
 def format_results_blocks(rows, col_names, max_rows=5):
-    """Format query results as Slack Block Kit blocks"""
+    """Format query results as Slack Block Kit blocks (avoids >2000 char errors)."""
     blocks = [
         {"type": "header", "text": {"type": "plain_text", "text": "📊 Sensor Data Results"}}
     ]
@@ -213,14 +213,22 @@ def format_results_blocks(rows, col_names, max_rows=5):
         return blocks
 
     for row in display_rows:
-        row_text = "\n".join([f"*{col}*: {val}" for col, val in zip(col_names, row)])
-        blocks.append({"type": "section", "fields": [{"type": "mrkdwn", "text": row_text}]})
+        fields = []
+        for col, val in zip(col_names, row):
+            field_text = f"*{col}*: {str(val)[:1000]}"  # truncate to stay safe
+            fields.append({"type": "mrkdwn", "text": field_text})
+
+        blocks.append({"type": "section", "fields": fields})
         blocks.append({"type": "divider"})
 
     if len(rows) > max_rows:
-        blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": f"...and {len(rows)-max_rows} more rows"}]})
+        blocks.append({
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": f"...and {len(rows)-max_rows} more rows"}]
+        })
 
     return blocks
+
 
             
 
@@ -280,6 +288,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
