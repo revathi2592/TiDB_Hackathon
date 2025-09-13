@@ -206,7 +206,7 @@ def handle_query(user_query):
     User query: {user_query}
     Business rules: {thresholds_text}
     Retrieved rows: {table_text}
-    Instructions: Explain which metrics caused FAIL/WARNING if data is available. When 0 is returned by the query, tell the user that no such event/value occurred/seen. 
+    Instructions:When 0 is returned by the query, tell the user that no such event/value occurred/seen. Explain which metrics caused FAIL/WARNING only when data is available.
     """
     response = gemini_model.generate_content(prompt)
     return {"mode": mode, "query": sql, "rows": rows, "cols": col_names, "semantic_answer": response.text.strip()}
@@ -254,6 +254,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
