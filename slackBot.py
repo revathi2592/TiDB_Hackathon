@@ -71,13 +71,28 @@ def run_sql_query(user_query):
       - temperature (float)
       - vibration (float)
     """
-    sql_prompt = f"""
-    Convert the following natural language question into a valid MySQL-compatible SQL query for TiDB.
-    {schema}
-    Question: {user_query}
-    Only output the SQL query , nothing else.
-    Do not include id and embedding in the results.
-    """
+sql_prompt = f"""
+Convert the following natural language question into a valid MySQL-compatible SQL query for TiDB.
+
+Database: test
+Table: sensor_data1
+Columns:
+  - device_id (string: e.g. device_1, device_2)
+  - status (string: e.g. SUCCESS, FAIL)
+  - reading_time (datetime)
+  - temperature (float)
+  - vibration (float)
+  - pressure (float)
+
+⚠️ Rules:
+- Always include `device_id`, `reading_time`, `temperature`, and `vibration` in the SELECT clause.
+- You may include other relevant columns (like `status` or `pressure`) if the query requires.
+- Do NOT include `id` or `embedding`.
+- Return only the SQL query, nothing else.
+Question: {user_query}
+Answer:
+"""
+
     sql_response = gemini_model.generate_content(sql_prompt)
     sql_query = sql_response.text.strip().strip("```sql").strip("```")
 
@@ -216,34 +231,35 @@ def run_query(sql: str):
 
 
 def plot_results(rows, col_names, filename="plot.png"):
-    """Create a line plot for temperature and/or vibration over time by device"""
+    """Create a line plot for available metrics over time by device"""
     import pandas as pd
 
     df = pd.DataFrame(rows, columns=col_names)
 
-    # Ensure we at least have time + device
+    # Require time + device
     if "reading_time" not in df.columns or "device_id" not in df.columns:
         return None  
 
-    # Convert to datetime if not already
+    # Convert to datetime
     df["reading_time"] = pd.to_datetime(df["reading_time"])
 
     plt.figure(figsize=(10, 5))
 
-    # Plot available metrics
-    metrics = []
-    if "temperature" in df.columns:
-        metrics.append("temperature")
-    if "vibration" in df.columns:
-        metrics.append("vibration")
-
+    # Collect metrics that actually exist
+    metrics = [m for m in ["temperature", "vibration"] if m in df.columns]
     if not metrics:
-        return None  # nothing to plot
+        return None
 
+    # Plot per device
     for device_id, group in df.groupby("device_id"):
         for metric in metrics:
             marker = "o" if metric == "temperature" else "x"
-            plt.plot(group["reading_time"], group[metric], marker=marker, label=f"{device_id} - {metric}")
+            plt.plot(
+                group["reading_time"],
+                group[metric],
+                marker=marker,
+                label=f"{device_id} - {metric}"
+            )
 
     plt.xlabel("Reading Time")
     plt.ylabel("Value")
@@ -257,6 +273,7 @@ def plot_results(rows, col_names, filename="plot.png"):
     buf.seek(0)
     plt.close()
     return buf
+
 
 
 def format_results_table(rows, col_names, max_rows=10):
@@ -369,6 +386,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
