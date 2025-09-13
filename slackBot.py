@@ -71,27 +71,27 @@ def run_sql_query(user_query):
       - temperature (float)
       - vibration (float)
     """
-sql_prompt = f"""
-Convert the following natural language question into a valid MySQL-compatible SQL query for TiDB.
+    sql_prompt = f"""
+        Convert the following natural language question into a valid MySQL-compatible SQL query for TiDB.
 
-Database: test
-Table: sensor_data1
-Columns:
-  - device_id (string: e.g. device_1, device_2)
-  - status (string: e.g. SUCCESS, FAIL)
-  - reading_time (datetime)
-  - temperature (float)
-  - vibration (float)
-  - pressure (float)
+        Database: test
+        Table: sensor_data1
+        Columns:
+        - device_id (string: e.g. device_1, device_2)
+        - status (string: e.g. SUCCESS, FAIL)
+        - reading_time (datetime)
+        - temperature (float)
+        - vibration (float)
+        - pressure (float)
 
-⚠️ Rules:
-- Always include `device_id`, `reading_time`, `temperature`, and `vibration` in the SELECT clause.
-- You may include other relevant columns (like `status` or `pressure`) if the query requires.
-- Do NOT include `id` or `embedding`.
-- Return only the SQL query, nothing else.
-Question: {user_query}
-Answer:
-"""
+        ⚠️ Rules:
+        - Always include `device_id`, `reading_time`, `temperature`, and `vibration` in the SELECT clause.
+        - You may include other relevant columns (like `status` or `pressure`) if the query requires.
+        - Do NOT include `id` or `embedding`.
+        - Return only the SQL query, nothing else.
+        Question: {user_query}
+        Answer:
+        """
 
     sql_response = gemini_model.generate_content(sql_prompt)
     sql_query = sql_response.text.strip().strip("```sql").strip("```")
@@ -386,6 +386,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
