@@ -132,7 +132,7 @@ def run_query(sql: str):
             return [], col_names
 
         # --- Filter out unwanted columns ---
-        exclude_cols = {"id", "embeddings"}
+        exclude_cols = {"id", "embedding"}
         keep_indexes = [i for i, col in enumerate(col_names) if col not in exclude_cols]
         filtered_col_names = [col_names[i] for i in keep_indexes]
         filtered_rows = [[row[i] for i in keep_indexes] for row in rows]
@@ -293,6 +293,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
