@@ -328,32 +328,37 @@ def message(payload):
                 text=f"Query:\n```{result['query']}```\n\nError: No results"
             )
             return
-
+        
         # If graph requested
         if "plot" in text.lower() or "graph" in text.lower() or "chart" in text.lower():
-            buf = plot_results(result["rows"], result["cols"])
-            if buf:
-                client.files_upload_v2(
-                    channel=channel_id,
-                    initial_comment=f"Here is your {result['mode']} query result plot",
-                    file_uploads=[{
-                        "file": buf,
-                        "filename": "plot.png",
-                        "title": "Sensor Data Plot"
-                    }]
-                )
+            if result["rows"]:  # double-check rows are not empty
+                buf = plot_results(result["rows"], result["cols"])
+                if buf:
+                    client.files_upload_v2(
+                        channel=channel_id,
+                        initial_comment=f"Here is your {result['mode']} query result plot",
+                        file_uploads=[{
+                            "file": buf,
+                            "filename": "plot.png",
+                            "title": "Sensor Data Plot"
+                        }]
+                    )
+                else:
+                    client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
             else:
-                client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
+                client.chat_postMessage(channel=channel_id, text="No data available to plot.")
         else:
             client.chat_postMessage(
                 channel=channel_id,
                 text=f"*Mode*: {result['mode']}\n*Query:*\n```{result['query']}```\n\n💡 {result['semantic_answer']}",
-                blocks=format_results_blocks(result["rows"], result["cols"])
+                blocks=format_results_blocks(result["rows"], result["cols"]) if result["rows"] else []
             )
+
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
