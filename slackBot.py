@@ -206,7 +206,7 @@ def handle_query(user_query):
     User query: {user_query}
     Business rules: {thresholds_text}
     Retrieved rows: {table_text}
-    Instructions: Explain which metrics caused FAIL/WARNING if applicable.
+    Instructions: Explain which metrics caused FAIL/WARNING if metrics are available else just specify the metric.
     """
     response = gemini_model.generate_content(prompt)
     return {"mode": mode, "query": sql, "rows": rows, "cols": col_names, "semantic_answer": response.text.strip()}
@@ -253,6 +253,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
