@@ -26,6 +26,25 @@ slack_event_adapter = SlackEventAdapter(os.environ['SIGNING_SECRET_'], '/slack/e
 client = slack.WebClient(token=os.environ['SLACK_TOKEN_'])
 BOT_ID = client.api_call("auth.test")['user_id']
 
+THRESHOLDS = {
+    "temperature": {
+        "fail": "temperature < 60 or temperature > 95",
+        "warning": "85.1 <= temperature <= 95",
+        "ok": "otherwise",
+    },
+    "vibration": {
+        "fail": "vibration > 1.5",
+        "warning": "1.01 <= vibration <= 1.5",
+        "ok": "otherwise",
+    },
+    "pressure": {
+        "fail": "pressure < 1.0 or pressure > 2.5",
+        "warning": "2.01 <= pressure <= 2.5",
+        "ok": "otherwise",
+    }
+}
+
+
 
 # --- Step 1: Classify query type ---
 def classify_query(user_query):
@@ -89,10 +108,52 @@ def handle_query(user_query):
     mode = classify_query(user_query)
     if mode == "SQL":
         rows, col_names, sql = run_sql_query(user_query)
-        return {"mode": "SQL", "query": sql, "rows": rows, "cols": col_names}
     else:
         rows, col_names, sql = run_vector_search(user_query)
-        return {"mode": "VECTOR", "query": sql, "rows": rows, "cols": col_names}
+
+    # Format results
+    if not rows:
+        table_text = "No matching rows found."
+    else:
+        import pandas as pd
+        df = pd.DataFrame(rows, columns=col_names)
+        table_text = df.head(10).to_markdown(index=False)
+
+    # Build thresholds text for Gemini
+    thresholds_text = "\n".join([
+        f"- {metric}: FAIL if {rules['fail']}, WARNING if {rules['warning']}, OK if {rules['ok']}"
+        for metric, rules in THRESHOLDS.items()
+    ])
+
+    # Prompt Gemini
+    prompt = f"""
+    You are an assistant analyzing IoT sensor data for devices.
+
+    User query:
+    {user_query}
+
+    Business rules for classification:
+    {thresholds_text}
+
+    Retrieved rows:
+    {table_text}
+
+    Instructions:
+    - Apply the above rules exactly when explaining results.
+    - If no rows match a failure condition, explicitly answer that the device has not failed.
+    - Be concise but clear, explaining which metric(s) caused FAIL/WARNING if applicable.
+    """
+
+    response = gemini_model.generate_content(prompt)
+
+    return {
+        "mode": mode,
+        "query": sql,
+        "rows": rows,
+        "cols": col_names,
+        "semantic_answer": response.text.strip()
+    }
+
 
 
 # --- TiDB Connection using pymysql ---
@@ -286,13 +347,14 @@ def message(payload):
         else:
             client.chat_postMessage(
                 channel=channel_id,
-                text=f"*Mode*: {result['mode']}\n*Query:*\n```{result['query']}```",
+                text=f"*Mode*: {result['mode']}\n*Query:*\n```{result['query']}```\n\n💡 {result['semantic_answer']}",
                 blocks=format_results_blocks(result["rows"], result["cols"])
             )
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
