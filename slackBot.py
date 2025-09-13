@@ -102,14 +102,12 @@ def run_sql_query(user_query):
 
 # --- Step 3: Vector Search ---
 def run_vector_search(user_query, top_k=5):
-    # Create embedding for query
     model = TextEmbeddingModel.from_pretrained("text-embedding-005")
     embeddings = model.get_embeddings([user_query])
     query_vector = embeddings[0].values
 
-    # TiDB ANN search
     vector_sql = f"""
-    SELECT device_id, reading_time, status,
+    SELECT device_id, reading_time, temperature, vibration, pressure, status,
            1 - (dot_product(embedding, JSON_ARRAY_PACK('{query_vector}')) /
            (norm(embedding) * norm(JSON_ARRAY_PACK('{query_vector}')))) AS similarity
     FROM sensor_data1
@@ -118,6 +116,7 @@ def run_vector_search(user_query, top_k=5):
     """
     rows, col_names = run_query(vector_sql)
     return rows, col_names, vector_sql
+
 
 # --- Step 4: Main handler ---
 def handle_query(user_query):
@@ -386,6 +385,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
