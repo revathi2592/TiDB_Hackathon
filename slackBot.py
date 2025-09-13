@@ -55,7 +55,8 @@ def run_sql_query(user_query):
     Convert the following natural language question into a valid MySQL-compatible SQL query for TiDB.
     {schema}
     Question: {user_query}
-    Only output the SQL query excluding id and embedding, nothing else.
+    Only output the SQL query , nothing else.
+    Do not include id and embedding in the results.
     """
     sql_response = gemini_model.generate_content(sql_prompt)
     sql_query = sql_response.text.strip().strip("```sql").strip("```")
@@ -288,6 +289,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
