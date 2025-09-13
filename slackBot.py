@@ -118,14 +118,9 @@ def get_tidb_connection():
     )
 
 def run_query(sql: str):
-    """Run query against TiDB and return results"""
+    """Run query against TiDB and return results (excluding id and embeddings columns)."""
     try:
-        print("===========================")
-        print("inside try")
         conn = get_tidb_connection()
-        print("========================")
-        print(conn)
-        print("==========================")
         cursor = conn.cursor()
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -136,17 +131,26 @@ def run_query(sql: str):
         if not rows:
             return [], col_names
 
-        result_text = " | ".join(col_names) + "\n"
-        result_text += "\n".join([" | ".join(str(x) for x in row) for row in rows[:10]])
-        if len(rows) > 10:
-            result_text += f"\n...and {len(rows)-10} more rows."
-        return rows, col_names 
+        # --- Filter out unwanted columns ---
+        exclude_cols = {"id", "embeddings"}
+        keep_indexes = [i for i, col in enumerate(col_names) if col not in exclude_cols]
+        filtered_col_names = [col_names[i] for i in keep_indexes]
+        filtered_rows = [[row[i] for i in keep_indexes] for row in rows]
+
+        # (optional) preview text if you still need it
+        result_text = " | ".join(filtered_col_names) + "\n"
+        result_text += "\n".join([" | ".join(str(x) for x in row) for row in filtered_rows[:10]])
+        if len(filtered_rows) > 10:
+            result_text += f"\n...and {len(filtered_rows)-10} more rows."
+
+        return filtered_rows, filtered_col_names
 
     except Exception as e:
         print("============error==================")
         print(e)
         print("===============================")
         return None, [f"Error executing query: {e}"]
+
 
 
 def plot_results(rows, col_names, filename="plot.png"):
@@ -289,6 +293,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
