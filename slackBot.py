@@ -248,42 +248,39 @@ def message(payload):
     if text:
         result = handle_query(text)
 
-        if rows is None:
-            client.chat_postMessage(channel=channel_id, text=f"SQL:\n```{sql_query}```\n\nError: {col_names[0]}")
+        if result["rows"] is None:
+            client.chat_postMessage(
+                channel=channel_id,
+                text=f"Query:\n```{result['query']}```\n\nError: No results"
+            )
             return
 
-        # --- If user asks for a graph ---
+        # If graph requested
         if "plot" in text.lower() or "graph" in text.lower() or "chart" in text.lower():
-            buf = plot_results(rows, col_names)
+            buf = plot_results(result["rows"], result["cols"])
             if buf:
                 client.files_upload_v2(
                     channel=channel_id,
-                    initial_comment="Here is your sensor data plot ",
-                    file_uploads=[
-                        {
-                            "file": buf,
-                            "filename": "plot.png",
-                            "title": "Sensor Data Plot"
-                        }
-                    ]
+                    initial_comment=f"Here is your {result['mode']} query result plot",
+                    file_uploads=[{
+                        "file": buf,
+                        "filename": "plot.png",
+                        "title": "Sensor Data Plot"
+                    }]
                 )
-
             else:
-                
                 client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
         else:
-            # Text-based result preview
-            #result_text = format_results_table(rows, col_names)
-            #result_text = " | ".join(col_names) + "\n"
-            #result_text += "\n".join([" | ".join(str(x) for x in row) for row in rows[:10]])
             client.chat_postMessage(
-                    channel=channel_id,
-                    blocks=format_results_blocks(rows, col_names)
-                )
+                channel=channel_id,
+                text=f"*Mode*: {result['mode']}\n*Query:*\n```{result['query']}```",
+                blocks=format_results_blocks(result["rows"], result["cols"])
+            )
 
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
