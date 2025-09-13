@@ -332,7 +332,7 @@ def message(payload):
         
         # If graph requested
         if "plot" in text.lower() or "graph" in text.lower() or "chart" in text.lower():
-            buf = plot_results(result["rows"], result["col_names"])
+            buf = plot_results(result["rows"], result["cols"])  # also corrected key to "cols"
             if buf:
                 client.files_upload_v2(
                     channel=channel_id,
@@ -346,8 +346,7 @@ def message(payload):
                     ]
                 )
             else:
-                    client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
-
+                client.chat_postMessage(channel=channel_id, text="Could not generate plot for this query.")
         else:
             client.chat_postMessage(
                 channel=channel_id,
@@ -359,6 +358,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
