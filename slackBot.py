@@ -216,13 +216,13 @@ def run_query(sql: str):
 
 
 def plot_results(rows, col_names, filename="plot.png"):
-    """Create a line plot for one or more devices"""
+    """Create a line plot for temperature and/or vibration over time by device"""
     import pandas as pd
 
     df = pd.DataFrame(rows, columns=col_names)
 
-    # Ensure required columns
-    if not {"reading_time", "temperature", "vibration", "device_id"}.issubset(df.columns):
+    # Ensure we at least have time + device
+    if "reading_time" not in df.columns or "device_id" not in df.columns:
         return None  
 
     # Convert to datetime if not already
@@ -230,14 +230,24 @@ def plot_results(rows, col_names, filename="plot.png"):
 
     plt.figure(figsize=(10, 5))
 
-    # Plot temperature and vibration separately by device
+    # Plot available metrics
+    metrics = []
+    if "temperature" in df.columns:
+        metrics.append("temperature")
+    if "vibration" in df.columns:
+        metrics.append("vibration")
+
+    if not metrics:
+        return None  # nothing to plot
+
     for device_id, group in df.groupby("device_id"):
-        plt.plot(group["reading_time"], group["temperature"], marker="o", label=f"{device_id} - Temp")
-        plt.plot(group["reading_time"], group["vibration"], marker="x", label=f"{device_id} - Vib")
+        for metric in metrics:
+            marker = "o" if metric == "temperature" else "x"
+            plt.plot(group["reading_time"], group[metric], marker=marker, label=f"{device_id} - {metric}")
 
     plt.xlabel("Reading Time")
     plt.ylabel("Value")
-    plt.title("Device Comparison - Temperature & Vibration")
+    plt.title("Device Comparison - " + " & ".join(metrics).title())
     plt.legend()
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -247,6 +257,7 @@ def plot_results(rows, col_names, filename="plot.png"):
     buf.seek(0)
     plt.close()
     return buf
+
 
 def format_results_table(rows, col_names, max_rows=10):
     """Format query results into a table with markdown for Slack"""
@@ -358,6 +369,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
