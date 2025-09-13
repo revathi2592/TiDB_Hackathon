@@ -134,19 +134,28 @@ def format_results_blocks(rows, col_names, max_rows=5):
 
 # --- NL to SQL ---
 def nl_to_sql(question: str):
+    """Convert natural language to SQL using Gemini"""
     schema = """
     Database: test
     Table: sensor_data1
-    Columns: device_id, status, reading_time, temperature, vibration, pressure
+    Columns:
+      - device_id (string)
+      - status (string: e.g. SUCCESS, FAIL)
+      - reading_time (datetime)
+      - temperature (float)
+      - vibration (float)
     """
     prompt = f"""
-    Convert this question to valid SQL (MySQL/TiDB) and select device_id, reading_time, temperature, vibration, pressure:
+    Convert the following natural language question into a valid MySQL-compatible SQL query for TiDB.
     {schema}
     Question: {question}
-    Only return SQL query.
+    Only output the SQL query, nothing else.
+    select only device_id, status, reading_time, temperature and vibration
     """
+
     response = gemini_model.generate_content(prompt)
-    return response.text.strip().strip("```sql").strip("```")
+    sql_query = response.text.strip().strip("```sql").strip("```")
+    return sql_query
 
 # --- Vector search ---
 def run_vector_search(user_query, top_k=5):
@@ -244,4 +253,5 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
