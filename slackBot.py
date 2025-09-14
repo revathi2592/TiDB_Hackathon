@@ -229,6 +229,28 @@ def message(payload):
 
     if not text:
         return
+    if "csv" in text.lower() or "excel" in text.lower():
+        sql_query = nl_to_sql(text)
+        rows, col_names = run_query(sql_query)
+
+        if rows:
+            df = pd.DataFrame(rows, columns=col_names)
+            buf = io.BytesIO()
+            # Choose CSV or Excel based on text
+            if "excel" in text.lower():
+                filename = "results.xlsx"
+                df.to_excel(buf, index=False, engine="openpyxl")
+            else:
+                filename = "results.csv"
+                df.to_csv(buf, index=False)
+
+            buf.seek(0)
+
+            client.files_upload_v2(
+                channel=channel_id,
+                initial_comment=f"Here are your results in {filename}",
+                file_uploads=[{"file": buf, "filename": filename, "title": "Query Results"}]
+            )
 
     # --- If plot requested, skip Gemini/semantic ---
     if "plot" in text.lower() or "graph" in text.lower() or "chart" in text.lower():
@@ -254,6 +276,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
