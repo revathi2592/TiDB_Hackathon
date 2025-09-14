@@ -117,9 +117,9 @@ def plot_results(rows, col_names, filename="plot.png"):
 
 
 # --- Formatting Slack blocks ---
-def format_results_blocks(rows, col_names):
+def format_results_blocks(rows, col_names, max_rows=5):
     blocks = [{"type":"header","text":{"type":"plain_text","text":"📊 Sensor Data Results"}}]
-    display_rows = rows
+    display_rows = rows[:max_rows]
     if not display_rows:
         blocks.append({"type":"section","text":{"type":"mrkdwn","text":"No data found."}})
         return blocks
@@ -128,8 +128,8 @@ def format_results_blocks(rows, col_names):
         fields = [{"type":"mrkdwn","text":f"*{col}*: {val}"} for col, val in zip(col_names, row)]
         blocks.append({"type":"section","fields":fields})
         blocks.append({"type":"divider"})
-    #if len(rows)>max_rows:
-        #blocks.append({"type":"context","elements":[{"type":"mrkdwn","text":f"...and {len(rows)-max_rows} more rows"}]})
+    if len(rows)>max_rows:
+        blocks.append({"type":"context","elements":[{"type":"mrkdwn","text":f"...and {len(rows)-max_rows} more rows"}]})
     return blocks
 
 # --- NL to SQL ---
@@ -276,6 +276,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
