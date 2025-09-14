@@ -248,12 +248,13 @@ def message(payload):
         client.chat_postMessage(
             channel=channel_id,
             #text=f"*Mode*: {result['mode']}\n*Query:*\n```{result['query']}```\n\n💡 {result['semantic_answer']}",
-            text=f"*Mode*: {result['mode']}\n💡 {result['semantic_answer']}",
+            text=f"💡 {result['semantic_answer']}",
             blocks=format_results_blocks(result["rows"], result["cols"]) if result["rows"] else []
         )
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
