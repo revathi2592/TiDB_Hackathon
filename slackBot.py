@@ -141,7 +141,7 @@ def nl_to_sql(question: str):
     Columns:
       - device_id (string: e.g. device_1, device_2 )
       - status (string: e.g. SUCCESS, FAIL)
-      - reading_time (datetime)
+      - reading_time (datetime: the time when the readings for the devices are recorded)
       - temperature (float)
       - vibration (float)
     """
@@ -276,6 +276,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
