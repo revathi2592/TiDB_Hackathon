@@ -253,7 +253,7 @@ def message(payload):
             )
 
     # --- If plot requested, skip Gemini/semantic ---
-    if "plot" in text.lower() or "graph" in text.lower() or "chart" in text.lower():
+    elif "plot" in text.lower() or "graph" in text.lower() or "chart" in text.lower():
         sql_query = nl_to_sql(text)
         rows, col_names = run_query(sql_query)
         buf = plot_results(rows, col_names)
@@ -276,6 +276,7 @@ def message(payload):
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+
 
 
 
