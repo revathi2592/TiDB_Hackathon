@@ -1,3 +1,6 @@
+## TiDB Account 
+revathi2592@gmail.com
+
 ## Accessing the Slack Bot
 
 You can interact with the Slack bot directly in the project workspace.
